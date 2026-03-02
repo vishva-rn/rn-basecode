@@ -5,13 +5,14 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { toastConfig } from "../src/components/ToastConfig";
-import OfflineBanner from "../src/components/OfflineBanner";
 import OnlineBanner from "../src/components/OnlineBanner";
+import { useNetworkStatus } from "../src/hooks/useNetworkStatus";
 import { initClarity } from "../src/utils/clarity";
 
 export default function RootLayout() {
+  const { isConnected } = useNetworkStatus();
+
   useEffect(() => {
-    // Initialize Microsoft Clarity
     try {
       initClarity();
     } catch (error) {
@@ -22,21 +23,39 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="auto" />
-      <OfflineBanner />
       <OnlineBanner />
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: "#6C3AED",
-          },
-          headerTintColor: "#FFFFFF",
-          headerTitleStyle: {
-            fontWeight: "700",
-          },
-          headerShadowVisible: false,
-          animation: "slide_from_right",
-        }}
-      />
+
+      {isConnected === false ? (
+        // No internet — only show the no-internet screen
+        <Stack screenOptions={{ headerShown: false, animation: "fade" }}>
+          <Stack.Screen name="no-internet" />
+        </Stack>
+      ) : (
+        // Internet available — show normal app screens
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: "#6C3AED",
+            },
+            headerTintColor: "#FFFFFF",
+            headerTitleStyle: {
+              fontWeight: "700",
+            },
+            headerShadowVisible: false,
+            animation: "slide_from_right",
+          }}
+        >
+          <Stack.Screen name="index" options={{ title: "🚀 RN Basecode" }} />
+          <Stack.Screen name="details" options={{ title: "Details" }} />
+          <Stack.Screen
+            name="no-internet"
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack>
+      )}
+
       <Toast config={toastConfig} />
     </SafeAreaProvider>
   );
